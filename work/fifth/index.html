@@ -95,16 +95,20 @@
 
     $(function () {
       $('select').change(function () {
-        var value = $('option:selected').val();
-        $(".list li").each(function () {
-          if ($(this).data('category-type').match(value)) {
-            $(this).show();
-          } else if (value == 'all') {
-            $(".list li").show();
-          } else {
-            $(this).hide();
-          }
-        });
+        var value = $(this).val();
+        if (value === 'all') {
+          $(".list li").show();
+        } else {
+          console.log($(".list li"));
+
+          $(".list li").each(function (key, li) {
+            if ($(li).data('category-type').match(value)) {
+              $(li).show();
+            } else {
+              $(li).hide();
+            };
+          });
+        };
       });
     });
 

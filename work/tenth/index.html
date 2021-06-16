@@ -1,33 +1,127 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="format-detection" content="telephone=no">
-    <title>jQuery</title>
-    <link rel="stylesheet" href="../../common/css/reset.css">
-    <link rel="stylesheet" href="../../common/css/base.css">
-    <link rel="stylesheet" href="./css/style.css">
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="container">
-        <div class="header">
-          <p class="header__title">Search Books!</p>
-        </div>
-        <div class="search">
-          <div class="search__text">
-            <input type="text" class="search__text__input" placeholder="検索する" data-js="search-word">
-          </div>
-          <button class="search__btn" data-js="search-btn">検索する</button>
-        </div>
-        <div class="message"></div>
-        <ul class="lists"></ul>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <title>jQuery</title>
+  <link rel="stylesheet" href="../../common/css/reset.css">
+  <link rel="stylesheet" href="../../common/css/base.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/paginationjs/2.1.4/pagination.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="container">
+      <div class="header">
+        <p class="header__title">Search Books!</p>
       </div>
+      <div class="search">
+        <div class="search__text">
+          <input type="text" class="search__text__input" placeholder="検索する" data-js="search-word">
+        </div>
+        <button class="search__btn" data-js="search-btn">検索する</button>
+      </div>
+      <div class="message"></div>
+      <ul class="lists">
+      </ul>
     </div>
-    <script src="../../common/js/jquery.js"></script>
-    <script src="./js/appid.js"></script>
-    <script>
+  </div>
+  <script src="../../common/js/jquery.js"></script>
+  <script src="./js/appid.js"></script>
+  <script>
+    $(function () {
+      var keyword = '';
+      var page = 1;
+      var pageCount;
+
+
+      $('.search__btn').on('click', function () {
+        keyword = $('.search__text__input').val();
+        ajaxSearch(keyword);
+      });
+
+      $(document).on('click', '[data-js="page-next"]', function (e) {
+        e.preventDefault();
+        if (pageCount > page) {
+          page++;
+          ajaxSearch(keyword);
+        };
+      });
+
+      $(document).on('click', '[data-js="page-prev"]', function (e) {
+        e.preventDefault();
+        if (page > 1) {
+          page--;
+          ajaxSearch(keyword);
+        };
+      });
+
+      function ajaxSearch(keyword) {
+        $.ajax({
+          url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+          type: 'GET',
+          datatype: 'json',
+          data: {
+            // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
+            applicationId: appId, //(今回はこの変数をIDとして使用します) ※メンターから別途渡されるファイルを読み込んでください。
+            booksGenreId: '001',
+            keyword: keyword,
+            hits: 20,
+            page: page,
+          },
+
+        }).done(function (data) {
+          pageCount = data.pageCount;
+          page = data.page;
+
+          $("html,body").scrollTop({ scrollTop: 0 });
+          $('.lists__item').remove();
+          $('.pager').remove();
+          $('.error-message').remove();
+
+          if (page === 0) {
+            $('.error-message').remove();
+            $('.message').append('<p class="error-message">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>')
+          } else {
+            console.log(data);
+
+            $.each(data.Items, function (index, value) {
+              $('.lists').append('<li class="lists__item"><div class="lists__item__inner"><a href="" class="lists__item__link" target="_blank">' + '<img src="' + value.Item.largeImageUrl + '" class="lists__item__img" alt=""></img><p class="lists__item__detail">作品名：' + value.Item.title + '</p><p class="lists__item__detail">作者　:' + value.Item.author + '</p><p class="lists__item__detail">出版社：' + value.Item.publisherName + '</p></a></div></li>')
+            });
+
+            $('.lists').after('<div class="pager" data-js="pager"><div class="counter"><span class="counter-current"></span>' + page + '/' + pageCount + '<span class="counter-all"></span></div><div class="btn-wrapper"><a class="btn-item" data-js="page-prev" href="">前へ</a><a class="btn-item" data-js="page-next" href="">次へ</a></div></div>');
+
+            if (pageCount === 1) {
+              $('.btn-item').addClass('disabled')
+            };
+            if (page === 1) {
+              $('[data-js="page-prev"]').addClass('disabled')
+            };
+            if (page === pageCount) {
+              $('[data-js="page-next"]').addClass('disabled')
+            };
+          };
+
+
+        }).fail(function (data) {
+          $('.lists__item').remove();
+          $('.pager').remove();
+          $('.error-message').remove();
+
+          console.log(data);
+          if (data.responseJSON.error_description === 'keyword must be set') {
+            $('.message').append('<p class="error-message">検索文字が入力されていません。</p>');
+          };
+
+          if (data.status === 429) {
+            $('.message').append('<p class="error-message">リクエスト過多です。しばらく時間を置いてからお試しください。</p>');
+          };
+        });
+      };
+    });
       // 楽天ブックスの総合検索APIを使って製作してください。
       // answerの挙動を良く見てね！
       //
@@ -55,7 +149,6 @@
       //   // この中にデータ取得後の動きを記述していきます。
       //   console.log(data);
       // });
-      //
       //
       // $.ajaxによってデータが取得できたら、必要なデータ(作品名とか作者名とか)を取得します。
       // 取得できたらHTMLに<ul class='lists'></ul>を用意しているので、下のテンプレに沿ってデータを入れ込みましょう。
@@ -87,6 +180,7 @@
       //     <a class="btn-item" data-js="page-next" href="">次へ</a>
       //   </div>
       // </div>
-    </script>
-  </body>
+  </script>
+</body>
+
 </html>

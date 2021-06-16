@@ -52,10 +52,10 @@
     // 今回やるのはドロップメニューです。
     // メニューをhoverすると隠れている中のメニューが表示され、メニューから離れると中のメニューが非表示されるプログラムです。
     $(function () {
-      $('.menu__list li').hover(function () {
-        $(this).children('.menu__list__childList').stop(true, false).slideDown();
+      $('.menu__list').children().hover(function () {
+        $(this).children('.menu__list__childList').stop().slideDown();
       }, function () {
-        $(this).children('.menu__list__childList').stop(true, false).slideUp();
+        $(this).children('.menu__list__childList').stop().slideUp();
       });
     })
       // [使用するメソッド]
