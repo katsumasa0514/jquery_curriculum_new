@@ -49,15 +49,16 @@
       function nextPrevBtn(btn) {
         $(document).on('click', '[data-js="page-' + btn + '"]', function (e) {
           e.preventDefault();
-          if ($(this).attr('class') != 'btn-item disabled' && btn === 'next') {
-            $(document).scrollTop(0);
-            page++;
-            ajaxSearch(keyword);
-          };
-          if ($(this).attr('class') != 'btn-item disabled' && btn === 'prev') {
-            $(document).scrollTop(0);
-            page--;
-            ajaxSearch(keyword);
+          if ($(this).attr('class') != 'btn-item disabled') {
+            if (btn === 'prev') {
+              page--;
+              $(document).scrollTop(0);
+              ajaxSearch(keyword);
+            } else {
+              page++;
+              $(document).scrollTop(0);
+              ajaxSearch(keyword);
+            };
           };
         });
       };
@@ -78,7 +79,6 @@
 
         }).done(function (data) {
           removeDuplication();
-
           if (data.page === 0) {
             switchStatus('検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。');
           } else {
@@ -92,7 +92,7 @@
                 '<p class="lists__item__detail">作者　：' + value.Item.author + '</p>' +
                 '<p class="lists__item__detail">出版社：' + value.Item.publisherName + '</p>' +
                 '</a></div></li>'
-              )
+              );
             });
 
             $('.lists').after(
@@ -156,12 +156,6 @@
         });
       };
 
-      function addDisabled(num, btn) {
-        if (page === num) {
-          $('[data-js="page-' + btn + '"]').addClass('disabled');
-        };
-      };
-
       function switchStatus(text) {
         $('.message').append('<p class="error-message">' + text + '</p>');
       }
@@ -171,6 +165,8 @@
         $('[data-js="pager"]').remove();
         $('.message').empty(); //親にemptyをかける
       };
+
+
 
     });
       // 楽天ブックスの総合検索APIを使って製作してください。
