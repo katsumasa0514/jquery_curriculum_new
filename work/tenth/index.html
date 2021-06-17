@@ -35,35 +35,32 @@
     $(function () {
       var keyword = '';
       var page = 1;
-      var pageCount;
 
-      $('.search__btn').on('click', function () {
-        keyword = $('.search__text__input').val();
-        page = 1
+      $('[data-js="search-btn"]').on('click', function () {
+        keyword = $('[data-js="search-word"]').val();
+        page = 1;
         ajaxSearch(keyword);
       });
 
-      $(document).on('click', '[data-js="page-next"]', function (e) {
-        e.preventDefault();
-        if (pageCount > page) {
-          scrollTop();
-          page++;
-          ajaxSearch(keyword);
-        };
-      });
+      nextPrevBtn('next');
 
-      $(document).on('click', '[data-js="page-prev"]', function (e) {
-        e.preventDefault();
-        if (page > 1) {
-          scrollTop();
-          page--;
-          ajaxSearch(keyword);
-        };
-      });
+      nextPrevBtn('prev');
 
-      function scrollTop() {
-        $(document).scrollTop(0);
-      }
+      function nextPrevBtn(btn) {
+        $(document).on('click', '[data-js="page-' + btn + '"]', function (e) {
+          e.preventDefault();
+          if ($(this).attr('class') != 'btn-item disabled' && btn === 'next') {
+            $(document).scrollTop(0);
+            page++;
+            ajaxSearch(keyword);
+          };
+          if ($(this).attr('class') != 'btn-item disabled' && btn === 'prev') {
+            $(document).scrollTop(0);
+            page--;
+            ajaxSearch(keyword);
+          };
+        });
+      };
 
       function ajaxSearch(keyword) {
         $.ajax({
@@ -80,12 +77,10 @@
           },
 
         }).done(function (data) {
-          remove();
-
-          pageCount = data.pageCount;
+          removeDuplication();
 
           if (data.page === 0) {
-            $('.message').append('<p class="error-message">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>')
+            switchStatus('検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。');
           } else {
             $.each(data.Items, function (index, value) {
               $('.lists').append(
@@ -112,32 +107,52 @@
               '</div></div>'
             );
 
-            addDisabled(1, 'prev');
-            addDisabled(data.pageCount, 'next');
+            if (1 === data.page) {
+              $('[data-js="page-prev"]').addClass('disabled');
+            };
+            if (data.pageCount === data.page) {
+              $('[data-js="page-next"]').addClass('disabled');
+            };
 
           };
 
 
         }).fail(function (data) {
-          remove();
+          removeDuplication();
+          var statusMessage;
 
           switch (data.status) {
+            case 0:
+              statusMessage = '通信に失敗しました。インターネットの接続をご確認ください。';
+              break;
+
             case 400:
               if (data.responseJSON.error_description === 'keyword must be set') {
-                errorMessage('検索文字が入力されていません。');
+                statusMessage = '検索文字が入力されていません。';
               } else {
-                errorMessage('検索文字に誤りがあります。');
-              }; break;
+                statusMessage = '検索文字に誤りがあります。';
+              };
+              break;
 
-            case 404: errorMessage('対象の本が見つかりません。'); break;
-            case 429: errorMessage('リクエスト過多です。しばらく時間を置いてからお試しください。'); break;
-            case 500: errorMessage('ただいまシステムエラーが起きています。復旧までお待ちください。'); break;
-            case 503: errorMessage('ただいまメンテナンス中です。'); break;
+            case 404:
+              statusMessage = '対象の本が見つかりません。';
+              break;
+
+            case 429:
+              statusMessage = 'リクエスト過多です。しばらく時間を置いてからお試しください。';
+              break;
+
+            case 500:
+              statusMessage = 'ただいまシステムエラーが起きています。復旧までお待ちください。';
+              break;
+
+            case 503:
+              statusMessage = 'ただいまメンテナンス中です。';
+              break;
           };
 
-          if (navigator.onLine === false) {
-            errorMessage('通信に失敗しました。インターネットの接続をご確認ください。');
-          };
+          switchStatus(statusMessage);
+
         });
       };
 
@@ -147,14 +162,14 @@
         };
       };
 
-      function errorMessage(text) {
+      function switchStatus(text) {
         $('.message').append('<p class="error-message">' + text + '</p>');
       }
 
-      function remove() {
-        $('.lists__item').remove();
-        $('.pager').remove();
-        $('.error-message').remove();
+      function removeDuplication() {
+        $('.lists').empty(); //親にemptyをかける
+        $('[data-js="pager"]').remove();
+        $('.message').empty(); //親にemptyをかける
       };
 
     });
