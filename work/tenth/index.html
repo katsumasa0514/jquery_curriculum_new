@@ -35,6 +35,8 @@
     $(function () {
       var keyword = '';
       var page = 1;
+      var Hits = 20;
+      var FirstPage = 1;
 
       $('[data-js="search-btn"]').on('click', function () {
         keyword = $('[data-js="search-word"]').val();
@@ -73,7 +75,7 @@
             applicationId: appId, //(今回はこの変数をIDとして使用します) ※メンターから別途渡されるファイルを読み込んでください。
             booksGenreId: '001',
             keyword: keyword,
-            hits: 20,
+            hits: Hits,
             page: page,
           },
 
@@ -107,7 +109,7 @@
               '</div></div>'
             );
 
-            if (1 === data.page) {
+            if (FirstPage === data.page) {
               $('[data-js="page-prev"]').addClass('disabled');
             };
             if (data.pageCount === data.page) {
